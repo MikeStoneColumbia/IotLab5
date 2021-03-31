@@ -142,6 +142,7 @@ def update_val(pin):
         sleep_ms(20)
         if c.value() == 0:
             date[ptr] += 1
+            display_d(date)
     c.irq(trigger=Pin.IRQ_FALLING, handler=update_val) 
 
 def mv_ptr(pin):
@@ -169,7 +170,7 @@ def show_old_weather():
         show(old_weather[0],0,0)
         show(old_weather[1],0,16)
 
-def show_old_tweet(pin):
+def show_old_tweet():
     global show_clock
     show_clock = False
     oled.fill(0)
