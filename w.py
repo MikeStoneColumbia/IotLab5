@@ -45,19 +45,6 @@ def format_time(time):
     second = int(time[5])
     rtc.datetime((year, month, day, 1,hour,minute,second,0))
 
-# def m_mode(p):
-#     global time_set
-#     global date
-#     global show_clock
-#     time_set = False
-#     show_clock = True
-#     str_t = ""
-#     for t in date:
-#         str_t += str(t) + ':'
-#     format_time(t)
-#     time_functions()
-
-
 def disable(btn):
     btn.irq(handler=None)
 
@@ -87,23 +74,6 @@ def display_d(date):
     oled.text(str(date[0])+'/'+str(date[1])+'/'+str(date[2]), 0, 0)
     oled.text(str(date[3])+':'+str(date[4])+':'+str(date[5]), 0, 16)
     oled.show()   
-
-# def set_alarm(pin):
-#     pass
-
-# def set_time(pin):
-#     global time_set
-#     global show_clock
-#     global date
-#     date = list(x for x in rtc.datetime()[0:7])
-#     del date[3]
-#     time_set = True
-#     show_clock = False
-#     b.irq(trigger=Pin.IRQ_FALLING,handler=m_mode)
-#     c.irq(trigger=Pin.IRQ_FALLING,handler=None)
-
-#modes = ['greet','weather', 'tweet', 'time', 'alarm', 'letters','showtime']
-
 
 def cycle_mode(pin):
     global mode_ptr
@@ -185,8 +155,6 @@ def feature_mode():
     greeting()
 
 def show_old_weather():
-    # global show_clock
-    # show_clock = False
     oled.fill(0)
     if len(old_weather) == 0:
         show('no weather',0,0)
@@ -240,12 +208,6 @@ def update_time():
     oled.text(hour_min_seconds, 0, 10)
     oled.show()
 
-# def time_functions():
-#     c.irq(trigger=Pin.IRQ_FALLING, handler=set_time)
-#     a.irq(trigger=Pin.IRQ_FALLING, handler=set_alarm)
-#     b.irq(trigger=Pin.IRQ_FALLING, handler=feature_mode)
-
-
 def check():
     addr = socket.getaddrinfo('192.168.1.204', 80)[0][-1]
     s = socket.socket()
@@ -294,7 +256,6 @@ def check():
             com = data[7]
             if com == 'time':
                 show_clock = True
-                #time_functions()
                 format_time(time)
                 response('{\'response\': \'time success\'}',soc)
             elif com == 'weather':
