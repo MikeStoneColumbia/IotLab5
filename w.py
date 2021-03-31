@@ -22,7 +22,7 @@ alarm = []
 a = Pin(0, Pin.IN, Pin.PULL_UP)
 b = Pin(13, Pin.IN)
 c = Pin(2, Pin.IN, Pin.PULL_UP)
-buzz = Pin(16,Pin.OUT)
+buzz = Pin(12,Pin.OUT)
 buzz.off()
 set_alarm = []
 
@@ -236,19 +236,7 @@ def check():
             print('before recv2')
             msg = soc.recv(2048).decode()
             print(msg, 'hi')
-            curr = list(x for x in rtc.datetime()[0:7])
-            while len(alarm) > 0 and curr > set_alarm:
-                a.irq(trigger=0)
-                b.irq(trigger=0)
-                c.irq(trigger=0)
-                buzz.on()
-                if a.value() == 0:
-                    buzz.off()
-                    alarm = []
-                    set_alarm = []
-                    a.irq(trigger=Pin.IRQ_FALLING, handler=cycle_mode)
-                    b.irq(trigger=Pin.IRQ_FALLING, handler=mv_ptr)
-                    c.irq(trigger=Pin.IRQ_FALLING, handler=update_val)
+            
                 
             data = msg.split('\r\n')[-1].split('\"')
             desc = data[-2]
@@ -276,6 +264,25 @@ def check():
             else:
                 response('{\'response\': \'invalid\'}',soc)
             soc.close()
+        
+        curr = list(x for x in rtc.datetime()[0:7])
+            
+        print(set_alarm, curr)
+        
+        while len(set_alarm) > 0 and curr > set_alarm:
+            print("buzz buzz!")
+            a.irq(trigger=0)
+            b.irq(trigger=0)
+            c.irq(trigger=0)
+            buzz.on()
+            if a.value() == 0:
+                buzz.off()
+                alarm = []
+                set_alarm = []
+                a.irq(trigger=Pin.IRQ_FALLING, handler=cycle_mode)
+                b.irq(trigger=Pin.IRQ_FALLING, handler=mv_ptr)
+                c.irq(trigger=Pin.IRQ_FALLING, handler=update_val)
+        
         if show_clock:
             update_time()
         elif time_set:
