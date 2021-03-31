@@ -106,10 +106,14 @@ def cycle_mode(pin):
     global modes
     global show_clock
     global date 
+    if modes[mode_ptr] == 'time':
+        str_t = ""
+        for t in date:
+            str_t += str(t) + ':'
+        format_time(str_t)
+    
     mode_ptr += 1
     show_clock = False
-    if mode_ptr >= len(modes):
-        mode_ptr = 0
     if modes[mode_ptr] == 'greeting':
         greeting()
     elif modes[mode_ptr] == 'weather':
@@ -128,10 +132,24 @@ def cycle_mode(pin):
         mode_ptr = -1
 
 def update_val(pin):
-    pass
+    global mode_ptr
+    global modes
+    global ptr
+    c.irq(trigger=0)
+    if modes[mode_ptr] == 'letters':
+        print('send lets')
+    elif modes[mode_ptr] == 'time' or modes[mode_ptr]:
+        sleep_ms(20)
+        if c.value() == 0:
+            date[ptr] += 1
+    c.irq(trigger=Pin.IRQ_FALLING, handler=update_val) 
 
 def mv_ptr(pin):
-    pass
+    global ptr
+    ptr += 1
+    if ptr >= 6:
+        ptr = 0
+
 
 def feature_mode():
     global show_clock
