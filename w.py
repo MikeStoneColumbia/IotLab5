@@ -1,9 +1,7 @@
 import network
-import ustruct
+import urequests
 import socket
-import select
 from ssd1306 import SSD1306_I2C
-from ubinascii import hexlify
 from machine import Pin, I2C, ADC, RTC
 from time import sleep_ms
 
