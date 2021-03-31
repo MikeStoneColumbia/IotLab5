@@ -39,7 +39,7 @@ def format_time(time):
     second = int(time[5])
     rtc.datetime((year, month, day, 1,hour,minute,second,0))
 
-def m_mode():
+def m_mode(p):
     global time_set
     global date
     global show_clock
@@ -47,7 +47,7 @@ def m_mode():
     show_clock = True
     str_t = ""
     for t in date:
-        t += str(t) + ':'
+        str_t += str(t) + ':'
     format_time(t)
     time_functions()
 
@@ -67,9 +67,11 @@ def change_clk(date):
     sleep_ms(14)
     av2 = a.value()
     cv2 = c.value()
-    if av and not av2:
+    print(av, av2)
+    print(cv, cv2)
+    if not av and not av2:
         date[ptr] += 1
-    if cv and not cv2:
+    if not cv and not cv2:
         ptr += 1
         if ptr >= 6:
             ptr = 0
@@ -221,4 +223,3 @@ def check():
             display_d(date)
             change_clk(date)
             
-        sleep_ms(200)
