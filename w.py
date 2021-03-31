@@ -2,11 +2,52 @@ import network
 import urequests
 import socket
 from ssd1306 import SSD1306_I2C
-from machine import Pin, I2C, ADC, RTC
+from machine import Pin, I2C, ADC, RTC, SPI
 from time import sleep_ms
+import urequests
+import ujson
 
 modes = ['greeting','weather', 'tweet', 'time', 'alarm', 'letters','showtime']
 mode_ptr = 0
+hspi = SPI(1, baudrate=1500000, polarity=1, phase=1)
+cs = Pin(15, Pin.OUT)
+cs.value(1)
+
+sleep_ms(50)
+
+URL = "http://ec2-18-233-162-2.compute-1.amazonaws.com"
+PORT = 8080 # The port used by the server
+
+# set data format
+cs.value(0)
+hspi.write(b'\x31\x2B') 
+cs.value(1)
+sleep_ms(50)
+
+# set power-saving features control
+cs.value(0)
+hspi.write(b'\x2d\x28')
+cs.value(1)
+sleep_ms(50)
+
+# set BW_Rate
+cs.value(0)
+hspi.write(b'\x2c\x0B')
+cs.value(1)
+sleep_ms(50)
+
+# set interrupt enable
+cs.value(0)
+hspi.write(b'\x2e\x00')
+cs.value(1)
+sleep_ms(50)
+
+# set FIFO control
+cs.value(0)
+hspi.write(b'\x38\x9F')
+cs.value(1)
+sleep_ms(50)
+
 i2c = I2C(-1, Pin(5), Pin(4))
 oled = SSD1306_I2C(128, 32, i2c)
 old_weather = []
@@ -105,7 +146,7 @@ def cycle_mode(pin):
         del date[3]
         display_d(date)
     elif modes[mode_ptr] == 'letters':
-        print('not implemented yet')
+        print('implementing')
         pass
     elif modes[mode_ptr] == 'showtime':
         show_clock = True
@@ -117,8 +158,73 @@ def update_val(pin):
     global ptr
     global alarm
     c.irq(trigger=0)
+    print(mode_ptr)
     if modes[mode_ptr] == 'letters':
-        print('send lets')
+        global cs
+        readings = []
+        for i in range(36):
+            print('send lets')
+            
+            # print("a", a.value())
+            # print("b", b.value())
+            # print("c", c.value())
+            
+    
+            bufx0 = bytearray(1)
+            bufx1 = bytearray(1)
+            bufy0 = bytearray(1)
+            bufy1 = bytearray(1)
+            bufz0 = bytearray(1)
+            bufz1 = bytearray(1)
+        
+            # read from registers
+    
+            cs.value(0)
+            hspi.write(b'\xb2')
+            hspi.readinto(bufx0)
+            cs.value(1)
+    
+            cs.value(0)
+            hspi.write(b'\xb3')
+            hspi.readinto(bufx1)
+            cs.value(1)
+    
+            cs.value(0)
+            hspi.write(b'\xb4')
+            hspi.readinto(bufy0)
+            cs.value(1)
+    
+            cs.value(0)
+            hspi.write(b'\xb5')
+            hspi.readinto(bufy1)
+            cs.value(1) 
+            
+            cs.value(0)
+            hspi.write(b'\xb6')
+            hspi.readinto(bufz0)
+            cs.value(1)
+    
+            cs.value(0)
+            hspi.write(b'\xb7')
+            hspi.readinto(bufz1)
+            cs.value(1)
+            
+            
+            bufx = ((bufx1[0]<<8) + bufx0[0])/256
+            bufy = ((bufy1[0]<<8) + bufy0[0])/256
+    
+            print(bufx, bufy)
+            readings.append(bufx)
+            readings.append(bufy)
+        
+            # screen updates at 12fps
+            sleep_ms(int(1000/12))
+            
+        message = {"letter": 'a', "readings" : readings}
+        response = urequests.post("{}:{}/{}".format(URL, PORT, 'train'), json=ujson.dumps(message), headers = {'content-type': 'application/json'})
+        print(response.content)
+        show(response.content, 0,0)
+        
     elif modes[mode_ptr] == 'time' or modes[mode_ptr] == 'alarm':
         sleep_ms(20)
         if c.value() == 0:
@@ -266,9 +372,7 @@ def check():
         
         curr = list(x for x in rtc.datetime()[0:7])
         del curr[3]
-            
-        print(set_alarm, curr)
-        
+                    
         while len(set_alarm) > 0 and curr > set_alarm:
             print("buzz buzz!")
             a.irq(trigger=0)
@@ -282,6 +386,12 @@ def check():
                 a.irq(trigger=Pin.IRQ_FALLING, handler=cycle_mode)
                 b.irq(trigger=Pin.IRQ_FALLING, handler=mv_ptr)
                 c.irq(trigger=Pin.IRQ_FALLING, handler=update_val)
+        
+        bufx0 = bytearray(1)
+        cs.value(0)
+        hspi.write(b'\xb2')
+        hspi.readinto(bufx0)
+        cs.value(1)
         
         if show_clock:
             update_time()
