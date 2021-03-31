@@ -13,7 +13,6 @@ cs.value(1)
 def check():
     i2c = machine.I2C(-1, Pin(5), Pin(4))
     oled = ssd1306.SSD1306_I2C(128, 32, i2c)
-    xy = [0,0]
     time.sleep_ms(50)
     samples = 37
     readings = []
@@ -102,7 +101,7 @@ def check():
         hspi.readinto(bufz1)
         cs.value(1)
         
-        if samples <= 36:
+        if samples <= 90:
             bufx = ((bufx1[0]<<8) + bufx0[0])/256
             bufy = ((bufy1[0]<<8) + bufy0[0])/256
     
@@ -110,7 +109,7 @@ def check():
             readings.append(bufx)
             readings.append(bufy)
             
-            if samples == 36:
+            if samples == 90:
                 message = {"letter": 'c', "readings" : readings}
                 response = urequests.post("{}:{}/{}".format(URL, PORT, 'train'), json=ujson.dumps(message), headers = {'content-type': 'application/json'})
                 print(response.content)
@@ -155,4 +154,4 @@ def check():
         oled.show()
         
         # screen updates at 12fps
-        time.sleep(1/12)
+        time.sleep(1/30)
