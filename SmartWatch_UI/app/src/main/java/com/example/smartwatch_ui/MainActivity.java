@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -178,54 +179,67 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendTweet(String msg){
-       // RequestQueue requestQueue = Volley.newRequestQueue(this);
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
 
-//        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, tweetLink+msg, null, new Response.Listener<JSONObject>() {
-//            @Override
-//            public void onResponse(JSONObject response) {
-//                Log.d("tweetStatus", "tweeted");
-//            }
-//        }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                Log.d("tweetStatus", "Error: " + error.getMessage());
-//                error.printStackTrace();
-//            }
-//        }){
-//            @Override
-//            public String getBodyContentType() {
-//                return "application/x-www-form-urlencoded; charset=UTF-8";
-//            }
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, tweetLink+msg, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("tweetStatus", "tweeted");
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("tweetStatus", "Error: " + error.getMessage());
+                sendToHuzzah(msg,"tweet");
+                error.printStackTrace();
+            }
+        }){
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> params =  new HashMap<>();
+                params.put("api_key",tweetKey);
+                params.put("status",msg);
+                return params;
+            }
+
+        };
+
+        requestQueue.add(jsonObjectRequest);
+
+//         String consumerKeyStr = "U80dqcEJLT3IgdEkNXiZTZCGc";
+//         String consumerSecretStr = "tqp4oiCzESHAqJ0PszlTfgF7NNGxmIf2z0vELWTt9kW6Rbrf5Q";
+//         String accessTokenStr = "1149385301090959360-B56jawvSKqaSIoK3PSjnsakZNlRaCw";
+//         String accessTokenSecretStr = "pP3j39ynQgD3rqHv9Wx7xAYyoBrYIzJ7p4nlKjxDAuWo8";
+
+//        try {
+//            Twitter twitter = new TwitterFactory().getInstance();
 //
-//            @Override
-//            protected Map<String, String> getParams() throws AuthFailureError {
-//                Map<String,String> params =  new HashMap<>();
-//                params.put("api_key",tweetKey);
-//                params.put("status",msg);
-//                return params;
-//            }
+//            twitter.setOAuthConsumer(consumerKeyStr, consumerSecretStr);
+//            AccessToken accessToken = new AccessToken(accessTokenStr,
+//                    accessTokenSecretStr);
 //
-//        };
+//            twitter.setOAuthAccessToken(accessToken);
+//
+//            twitter.updateStatus("Post using Twitter4J Again");
+//
+//            System.out.println("Successfully updated the status in Twitter.");
+//        } catch (TwitterException e) {
+//            e.printStackTrace();
+//        }
 
-        //requestQueue.add(jsonObjectRequest);
 
-
-        Twitter twitter = TwitterFactory.getSingleton();
-        twitter.setOAuthConsumer("ZiHimAKxbOsynDsfTdLsjC9VK","kCxjMVdLwHTxSkZVAfGx4Jn89OkWokT0ZkEKg93LysCT37pSRq");
-        AccessToken accessToken = new AccessToken("1149385301090959360-uxJMxm8a6SFtQqws61X0ZN3e1xxiTa","9s1I9NEopx2Iy0Gslv6V2WhMRw3aPTsaRgYvfzB2d03Gq");
-        twitter.setOAuthAccessToken(accessToken);
-        try {
-            twitter.updateStatus("testing");
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
 
 
     }
 
     public void sendToHuzzah(String data, String command){
 
-        String url = "https://4cd598a0468b.ngrok.io";
+        String url = "http://7f97afe8a3ab.ngrok.io";
         JSONObject jsonCommand = new JSONObject();
         DateFormat df =  new SimpleDateFormat("yy/MM/dd HH:mm:ss");
         Date dateobj = new Date();
@@ -271,6 +285,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
+                50000,
+                0,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         Log.d("tester","I here");
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(jsonObjectRequest);
