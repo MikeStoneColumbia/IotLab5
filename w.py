@@ -222,7 +222,6 @@ def check():
     global old_tweet
     global show_clock
     global time_set
-    global date
     global alarm
     global set_alarm
     global a
@@ -237,7 +236,8 @@ def check():
             print('before recv2')
             msg = soc.recv(2048).decode()
             print(msg, 'hi')
-            while len(alarm) > 0 and date > set_alarm:
+            curr = list(x for x in rtc.datetime()[0:7])
+            while len(alarm) > 0 and curr > set_alarm:
                 a.irq(trigger=0)
                 b.irq(trigger=0)
                 c.irq(trigger=0)
