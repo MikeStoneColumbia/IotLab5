@@ -9,14 +9,15 @@ hspi = machine.SPI(1, baudrate=1500000, polarity=1, phase=1)
 cs = Pin(15, Pin.OUT)
 a = Pin(0, Pin.IN, Pin.PULL_UP)
 cs.value(1)
+test = 1
 
 def check():
     i2c = machine.I2C(-1, Pin(5), Pin(4))
     oled = ssd1306.SSD1306_I2C(128, 32, i2c)
     time.sleep_ms(50)
-    samples = 37
+    samples = 91
     readings = []
-    
+    oled_out = ""
 
     URL = "http://ec2-18-233-162-2.compute-1.amazonaws.com"
     PORT = 8080 # The port used by the server
@@ -52,9 +53,8 @@ def check():
     hspi.write(b'\x38\x9F')
     cs.value(1)
     time.sleep_ms(50)
-
+    
     while(1):
-
         oled.fill(0)
         
         # print("a", a.value())
@@ -110,9 +110,14 @@ def check():
             readings.append(bufy)
             
             if samples == 90:
-                message = {"letter": 'c', "readings" : readings}
+                message = {"letter": 'a', "readings" : readings}
                 response = urequests.post("{}:{}/{}".format(URL, PORT, 'train'), json=ujson.dumps(message), headers = {'content-type': 'application/json'})
-                print(response.content)
+                # if(test):
+                #     oled_out = ujson.load(response.content)["result"]
+                # else:
+                #     oled_out = response.content
+                oled_out = response.content
+                print(oled_out)
                 
         if a.value() == 0:
             
@@ -151,6 +156,7 @@ def check():
         # oled.text("hello", xy[0], xy[1])
         
         samples += 1
+        oled.text(oled_out, 0, 0)
         oled.show()
         
         # screen updates at 12fps
