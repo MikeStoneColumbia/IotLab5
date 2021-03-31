@@ -110,10 +110,12 @@ def cycle_mode(pin):
     show_clock = False
     if mode_ptr >= len(modes):
         mode_ptr = 0
-    if modes[mode_ptr] == 'greet':
+    if modes[mode_ptr] == 'greeting':
         greeting()
     elif modes[mode_ptr] == 'weather':
         show_old_weather()
+    elif modes[mode_ptr] == 'tweet':
+        show_old_tweet()
     elif modes[mode_ptr] == 'time' or modes[mode_ptr] == 'alarm':  
         date = list(x for x in rtc.datetime()[0:7])
         del date[3]
@@ -121,7 +123,7 @@ def cycle_mode(pin):
     elif modes[mode_ptr] == 'letters':
         print('not implemented yet')
         pass
-    elif modes[mode_ptr] == 'show':
+    elif modes[mode_ptr] == 'showtime':
         show_clock = True
         mode_ptr = -1
 
