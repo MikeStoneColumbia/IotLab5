@@ -146,7 +146,7 @@ def cycle_mode(pin):
         del date[3]
         display_d(date)
     elif modes[mode_ptr] == 'letters':
-        print('implementing')
+        print('press c to detect letters')
         pass
     elif modes[mode_ptr] == 'showtime':
         show_clock = True
