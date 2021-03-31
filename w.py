@@ -18,9 +18,13 @@ time_set = False;
 light = ADC(0)
 rtc = RTC()
 ptr=0
+alarm = []
 a = Pin(0, Pin.IN, Pin.PULL_UP)
 b = Pin(13, Pin.IN)
 c = Pin(2, Pin.IN, Pin.PULL_UP)
+buzz = Pin(16,Pin.OUT)
+buzz.off()
+set_alarm = []
 
 date = []
 
@@ -106,11 +110,18 @@ def cycle_mode(pin):
     global modes
     global show_clock
     global date 
+    global alarm
+    global set_alarm
+    curr_time = list(x for x in rtc.datetime()[0:7])
+
     if modes[mode_ptr] == 'time':
         str_t = ""
         for t in date:
             str_t += str(t) + ':'
         format_time(str_t)
+   
+    if modes[mode_ptr] == 'alarm' and alarm > curr_time:
+         set_alarm = alarm
     
     mode_ptr += 1
     show_clock = False
@@ -135,14 +146,27 @@ def update_val(pin):
     global mode_ptr
     global modes
     global ptr
+    global alarm
     c.irq(trigger=0)
     if modes[mode_ptr] == 'letters':
         print('send lets')
-    elif modes[mode_ptr] == 'time' or modes[mode_ptr]:
+    elif modes[mode_ptr] == 'time' or modes[mode_ptr] == 'alarm':
         sleep_ms(20)
         if c.value() == 0:
             date[ptr] += 1
+            if ptr == 1 and date[ptr] > 12:
+                date[ptr] = 1
+            elif ptr == 2 and date[ptr] > 31:
+                date[ptr] = 1
+            elif ptr == 3 and date[ptr] > 23:
+                date[ptr] = 0
+            elif ptr == 4 and date[ptr] > 59:
+                date[ptr] = 0
+            elif ptr == 5 and date[ptr] > 59:
+                date[ptr] = 0
             display_d(date)
+            if modes[mode_ptr] == 'alarm':
+                alarm = date[:]
     c.irq(trigger=Pin.IRQ_FALLING, handler=update_val) 
 
 def mv_ptr(pin):
@@ -236,6 +260,10 @@ def check():
     global old_tweet
     global show_clock
     global time_set
+    global date
+    global alarm
+    global set_alarm
+    global a
     
     while True:
         try:
@@ -247,6 +275,19 @@ def check():
             print('before recv2')
             msg = soc.recv(2048).decode()
             print(msg, 'hi')
+            while len(alarm) > 0 and date > set_alarm:
+                a.irq(trigger=0)
+                b.irq(trigger=0)
+                c.irq(trigger=0)
+                buzz.on()
+                if a.value() == 0:
+                    buzz.off()
+                    alarm = []
+                    set_alarm = []
+                    a.irq(trigger=Pin.IRQ_FALLING, handler=cycle_mode)
+                    b.irq(trigger=Pin.IRQ_FALLING, handler=mv_ptr)
+                    c.irq(trigger=Pin.IRQ_FALLING, handler=update_val)
+                
             data = msg.split('\r\n')[-1].split('\"')
             desc = data[-2]
             time = str(data[3])
