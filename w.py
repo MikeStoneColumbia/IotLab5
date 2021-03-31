@@ -51,6 +51,7 @@ def m_mode():
     format_time(t)
     time_functions()
 
+
 def disable(btn):
     btn.irq(handler=None)
 
@@ -73,7 +74,6 @@ def change_clk(date):
         if ptr >= 6:
             ptr = 0
     
-
 def display_d(date):
     oled.fill(0)
     oled.text(str(date[0])+'/'+str(date[1])+'/'+str(date[2]), 0, 0)
@@ -88,17 +88,12 @@ def set_time(pin):
     global show_clock
     global date
     date = list(x for x in rtc.datetime()[0:7])
-    print(date)
     del date[3]
-    print(date)
-    # del date[5]
     time_set = True
     show_clock = False
     b.irq(trigger=Pin.IRQ_FALLING,handler=m_mode)
-    while time_set:
-        display_d(date)
-        change_clk(date)
-
+    c.irq(trigger=Pin.IRQ_FALLING,handler=None)
+        
 def feature_mode():
     global show_clock
     c.irq(trigger=Pin.IRQ_FALLING, handler=show_old_weather) 
@@ -165,7 +160,7 @@ def update_time():
 def time_functions():
     c.irq(trigger=Pin.IRQ_FALLING, handler=set_time)
     a.irq(trigger=Pin.IRQ_FALLING, handler=set_alarm)
-    #b.irq(trigger=Pin.IRQ_FALLING, handler=feature_mode)
+    b.irq(trigger=Pin.IRQ_FALLING, handler=feature_mode)
 
 
 def check():
@@ -184,30 +179,11 @@ def check():
     global time_set
     
     while True:
-        # adjust_brightness()
-        # readable, writeable, errored = select.select(read_list,[],[],timeout)
-        # for soc in readable:
-            # if soc is s: 
-#                 cl, addr = s.accept()
-#                 msg = cl.recv(2048).decode()
-#                 # response('{\'response\': \'invalid\'}',cl) #pasted
-#                 print(msg, '1')
-#                 read_list.append(cl)
-# #            else:
-#                 timeout = 0.001
-                
-#                 data = msg.split('\r\n')[-1].split('\"')
-#                 desc = data[-2]
-#                 time = str(data[3])
-#                 com = data[7]
-                
         try:
             (soc, address) = s.accept()
-            # conn.setblocking(0)
             print("accepted ", address)
         except OSError:
             pass
-            #print("Nothing")
         else:
             print('before recv2')
             msg = soc.recv(2048).decode()
@@ -216,12 +192,6 @@ def check():
             desc = data[-2]
             time = str(data[3])
             com = data[7]
-            
-            # com = 'nothing'
-            # data = []
-            # desc = 'a'
-            # time = 'b'
-            
             if com == 'time':
                 show_clock = True
                 time_functions()
@@ -245,8 +215,10 @@ def check():
             else:
                 response('{\'response\': \'invalid\'}',soc)
             soc.close()
-            #read_list.remove(soc) 
         if show_clock:
             update_time()
+        elif time_set:
+            display_d(date)
+            change_clk(date)
             
         sleep_ms(200)
