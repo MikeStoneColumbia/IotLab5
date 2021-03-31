@@ -83,6 +83,7 @@ def cycle_mode(pin):
     global alarm
     global set_alarm
     curr_time = list(x for x in rtc.datetime()[0:7])
+    del curr_time[3]
 
     if modes[mode_ptr] == 'time':
         str_t = ""
@@ -266,6 +267,7 @@ def check():
             soc.close()
         
         curr = list(x for x in rtc.datetime()[0:7])
+        del curr[3]
             
         print(set_alarm, curr)
         
