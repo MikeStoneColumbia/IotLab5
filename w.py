@@ -7,6 +7,8 @@ from ubinascii import hexlify
 from machine import Pin, I2C, ADC, RTC
 from time import sleep_ms
 
+modes = ['greeting','weather', 'tweet', 'time', 'alarm', 'letters','showtime']
+mode_ptr = 0
 i2c = I2C(-1, Pin(5), Pin(4))
 oled = SSD1306_I2C(128, 32, i2c)
 old_weather = []
@@ -39,17 +41,17 @@ def format_time(time):
     second = int(time[5])
     rtc.datetime((year, month, day, 1,hour,minute,second,0))
 
-def m_mode(p):
-    global time_set
-    global date
-    global show_clock
-    time_set = False
-    show_clock = True
-    str_t = ""
-    for t in date:
-        str_t += str(t) + ':'
-    format_time(t)
-    time_functions()
+# def m_mode(p):
+#     global time_set
+#     global date
+#     global show_clock
+#     time_set = False
+#     show_clock = True
+#     str_t = ""
+#     for t in date:
+#         str_t += str(t) + ':'
+#     format_time(t)
+#     time_functions()
 
 
 def disable(btn):
@@ -82,30 +84,64 @@ def display_d(date):
     oled.text(str(date[3])+':'+str(date[4])+':'+str(date[5]), 0, 16)
     oled.show()   
 
-def set_alarm(pin):
+# def set_alarm(pin):
+#     pass
+
+# def set_time(pin):
+#     global time_set
+#     global show_clock
+#     global date
+#     date = list(x for x in rtc.datetime()[0:7])
+#     del date[3]
+#     time_set = True
+#     show_clock = False
+#     b.irq(trigger=Pin.IRQ_FALLING,handler=m_mode)
+#     c.irq(trigger=Pin.IRQ_FALLING,handler=None)
+
+#modes = ['greet','weather', 'tweet', 'time', 'alarm', 'letters','showtime']
+
+
+def cycle_mode(pin):
+    global mode_ptr
+    global modes
+    global show_clock
+    global date 
+    mode_ptr += 1
+    show_clock = False
+    if mode_ptr >= len(modes):
+        mode_ptr = 0
+    if modes[mode_ptr] == 'greet':
+        greeting()
+    elif modes[mode_ptr] == 'weather':
+        show_old_weather()
+    elif modes[mode_ptr] == 'time' or modes[mode_ptr] == 'alarm':  
+        date = list(x for x in rtc.datetime()[0:7])
+        del date[3]
+        display_d(date)
+    elif modes[mode_ptr] == 'letters':
+        print('not implemented yet')
+        pass
+    elif modes[mode_ptr] == 'show':
+        show_clock = True
+        mode_ptr = -1
+
+def update_val(pin):
     pass
 
-def set_time(pin):
-    global time_set
-    global show_clock
-    global date
-    date = list(x for x in rtc.datetime()[0:7])
-    del date[3]
-    time_set = True
-    show_clock = False
-    b.irq(trigger=Pin.IRQ_FALLING,handler=m_mode)
-    c.irq(trigger=Pin.IRQ_FALLING,handler=None)
-        
+def mv_ptr(pin):
+    pass
+
 def feature_mode():
     global show_clock
-    c.irq(trigger=Pin.IRQ_FALLING, handler=show_old_weather) 
-    a.irq(trigger=Pin.IRQ_FALLING, handler=show_old_tweet)
+    c.irq(trigger=Pin.IRQ_FALLING, handler=update_val) 
+    a.irq(trigger=Pin.IRQ_FALLING, handler=cycle_mode)
+    b.irq(trigger=Pin.IRQ_FALLING, handler=mv_ptr)
     show_clock = False
     greeting()
 
-def show_old_weather(pin):
-    global show_clock
-    show_clock = False
+def show_old_weather():
+    # global show_clock
+    # show_clock = False
     oled.fill(0)
     if len(old_weather) == 0:
         show('no weather',0,0)
@@ -159,10 +195,10 @@ def update_time():
     oled.text(hour_min_seconds, 0, 10)
     oled.show()
 
-def time_functions():
-    c.irq(trigger=Pin.IRQ_FALLING, handler=set_time)
-    a.irq(trigger=Pin.IRQ_FALLING, handler=set_alarm)
-    b.irq(trigger=Pin.IRQ_FALLING, handler=feature_mode)
+# def time_functions():
+#     c.irq(trigger=Pin.IRQ_FALLING, handler=set_time)
+#     a.irq(trigger=Pin.IRQ_FALLING, handler=set_alarm)
+#     b.irq(trigger=Pin.IRQ_FALLING, handler=feature_mode)
 
 
 def check():
@@ -196,7 +232,7 @@ def check():
             com = data[7]
             if com == 'time':
                 show_clock = True
-                time_functions()
+                #time_functions()
                 format_time(time)
                 response('{\'response\': \'time success\'}',soc)
             elif com == 'weather':
